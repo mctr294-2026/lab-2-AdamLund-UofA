@@ -1,25 +1,25 @@
 #include "roots.hpp"
 #include <functional>
 #include <cmath>
-
+#include <iostream>
 
 const int max_iter = 100000;
-const double tol_f    = 1e-6; 
-const double tol_x    = 1e-6;
+const double tol_f    = 1e-10; 
+const double tol_x    = 1e-10;
 
 
 bool bisection(std::function<double(double)> f,
                double a, double b,
                double *root) {
     int n = 0;
-    const double tolerance = 1e-6;
+    const double tolerance = 1e-10;
     double c;
     if (f(a) * f(b) >= 0) {
 	    return 0;
     }
 
 
-    while (( (b + a)/2 > tolerance ) && ( n < max_iter)) {
+    while (( n < max_iter)) {
 
 
 	c = (a+b)/2;
@@ -39,7 +39,7 @@ bool bisection(std::function<double(double)> f,
 	n++;
     }
 
-    *root = (a+b)/2;
+   *root = (a+b)/2;
 
     return 0;
 }
@@ -49,25 +49,28 @@ bool regula_falsi(std::function<double(double)> f,
                   double *root) {
 
 
+
+
+
+
 	    if (a > b) std::swap(a, b);
 
 
 	    double fa = f(a);
 	    double fb = f(b);
 
-	    if (fa * fb >= 0.0) return false;
+	    if (fa * fb > 0.0) return false;
 
 	    double c = a;
-
-	    for (int n = 0; n < max_iter; ++n) {
+            // This converages very slowly for this curve
+	    for (int n = 0; n < (max_iter * 10); n++) {
 		// c = a - f(a)*(b-a)/(f(b)-f(a))
-		double denom = (fb - fa);
 
-		c = a - fa * (b - a) / denom;
+		c = a - fa * (b - a) / (f(b) - f(a));
 		double fc = f(c);
 
 		// stopping conditions
-		if (std::abs(fc) <= tol_f || 0.5 * (b - a) <= tol_x) {
+		if (std::fabs(fc) <= tol_f) {
 		    *root = c;
 		    return true;
 		}
@@ -93,7 +96,7 @@ bool newton_raphson(std::function<double(double)> f,
                     double *root) {
 
 
-    const double eps_df   = 1e-14;   // guard against near-zero derivative
+    const double eps_df   = 1e-14;
 
     double x = c;
 
@@ -106,7 +109,7 @@ bool newton_raphson(std::function<double(double)> f,
 
         const double dfx = g(x);
         if (std::abs(dfx) <= eps_df) {
-            return false; // derivative too small -> can't take a stable Newton step
+            return false; // derivative too small
         }
 
         double x_next = x - fx / dfx;
@@ -137,12 +140,9 @@ bool secant(std::function<double(double)> f,
             double *root) {
 
 
-    const int    max_iter = 100000;
     const double eps_denom = 1e-14;  // guard against division by ~0
 
-    // Interpret:
-    // x0 = a, x1 = c
-    double x_prev = a;   // x_{n-1}
+    double x_prev = a;   // x{n-1}
     double x_curr = c;   // x_n
 
     double f_prev = f(x_prev);
@@ -156,7 +156,7 @@ bool secant(std::function<double(double)> f,
 
         const double denom = (f_curr - f_prev);
         if (std::abs(denom) <= eps_denom) {
-            return false; // secant slope too small -> unstable step
+            return false; // secant slope too small
         }
 
         // Secant update
@@ -172,7 +172,6 @@ bool secant(std::function<double(double)> f,
             return true;
         }
 
-        // Shift forward: (x_{n-1}, x_n) <- (x_n, x_{n+1})
         x_prev = x_curr;
         f_prev = f_curr;
 
